@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-针对新百度加固等商业加固方案，实现DEX文件的完整动态脱壳
+Complete dynamic unpacking of DEX files for commercial protection schemes like new Baidu protection
 """
 
 import os
@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import List, Dict, Optional, Tuple, Set
 
 class EnhancedDexDumpRunner:
-    """增强版脱壳执行器 - 针对新百度加固优化"""
+    """Enhanced Unpacking Executor - Optimized for New Baidu Protection"""
     
     def __init__(self, verbose: bool = False, max_attempts: int = 3, deep_search: bool = False, 
                  bypass_antidebug: bool = False):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-APK加固类型分析器
-直接分析APK文件，检测使用的加固类型和保护级别
+APK Protection Type Analyzer
+Directly analyzes APK files to detect used protection types and protection levels
 """
 
 import os
@@ -17,7 +17,7 @@ import struct
 import binascii
 
 class ApkProtectionAnalyzer:
-    """APK加固分析器"""
+    """APK Protection Analyzer"""
     
     def __init__(self, verbose: bool = True):
         self.verbose = verbose

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-反调试绕过模块 v1.0 - 开发版
+Anti-debug Bypass Module v1.0 - Development Version
 
+Module for bypassing anti-debugging protections in Android applications.
+Provides techniques to evade detection and allow Frida-based analysis.
 """
 
 import os
@@ -15,7 +17,7 @@ from pathlib import Path
 from datetime import datetime
 
 class AntiDebugBypass:
-    """反调试绕过引擎 - 精简版"""
+    """Anti-debug Bypass Engine - Lite Version"""
     
     def __init__(self, verbose=True):
         self.verbose = verbose
@@ -31,7 +33,7 @@ class AntiDebugBypass:
         self.script_path = ""
         
     def load_default_config(self):
-        """加载增强版默认配置"""
+        """Load enhanced default configuration"""
         return {
             "bypass_techniques": {
                 "frida_deep_hide": True,      # Frida深度隐藏
