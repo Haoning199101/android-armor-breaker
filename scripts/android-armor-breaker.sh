@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Android Armor Breaker skill wrapper script
-# APK protection analysis and intelligent unpacking solution：Statically identify mainstream protection vendors, dynamically extract DEX files
+# Android Armor Breaker - Skill wrapper script
+# APK reinforcement analysis and intelligent unpacking solution: static identification of mainstream reinforcement vendors, dynamic extraction of DEX files
 # Supports deep search and anti-debug bypass, provides complete DEX integrity verification
 # Provides simple command-line interface
 
@@ -46,54 +46,54 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Display help information
+# Show help information
 show_help() {
     cat << EOF
-Android Armor Breaker - APK protection analysis and intelligent unpacking solution
+Android Armor Breaker - APK Reinforcement Analysis and Intelligent Unpacking Solution
 
 Usage:
-  android-armor-breaker [analyze|dump] [Options]
+  android-armor-breaker [analyze|dump] [options]
 
 Subcommands:
-  analyze              Analyze APK file protection type
-  dump                 Unpack Android application (DefaultSubcommands)
+  analyze              Analyze reinforcement type of APK file
+  dump                 Unpack Android application (default subcommand)
 
-Analyze APK (analyze):
-  android-armor-breaker analyze --apk <apkfile_path> [--verbose]
+APK Analysis (analyze):
+  android-armor-breaker analyze --apk <apk_file_path> [--verbose]
 
-  -a, --apk <file_path>   APK file path (Required)
-  -v, --verbose        Verbose output mode
-
-Unpack application (dump):
-  android-armor-breaker dump [Options] <package_name>
-  or
-  android-armor-breaker [Options] <package_name> (Shorthand form)
-
-  -p, --package <package_name>    Android application package name (Required)
-  -o, --output <directory>     Output directory (Default: ./dex_output)
-  -d, --deep-search      Deep search mode（For strong protections like new Baidu protection）
-  -b, --bypass-antidebug Enable anti-debug bypass（For strong anti-debugging protection）
+  -a, --apk <file_path>   APK file path (required)
   -v, --verbose          Verbose output mode
 
+Application Unpacking (dump):
+  android-armor-breaker dump [options] <package_name>
+  or
+  android-armor-breaker [options] <package_name> (short form)
+
+  -p, --package <package_name>    Android application package name (required)
+  -o, --output <directory>        Output directory (default: ./dex_output)
+  -d, --deep-search               Deep search mode (for strong protections like new Baidu reinforcement)
+  -b, --bypass-antidebug          Enable anti-debug bypass (for strong anti-debug protection)
+  -v, --verbose                   Verbose output mode
+
 Examples:
-  # Analyze APK protection type
+  # Analyze APK reinforcement type
   android-armor-breaker analyze --apk ./app.apk --verbose
 
   # Unpack application (full form)
   android-armor-breaker dump --package com.example.app --deep-search
 
-  # Unpack application (shorthand form - backward compatible)
+  # Unpack application (short form - backward compatible)
   android-armor-breaker --package com.example.app --output ./output/
   android-armor-breaker -p com.example.app -o ./dex_output/ -v
 
-Skill features:
-  1. 🔍 APK protection analysis (analyzeSubcommands)
-  2. ⚡ Intelligent unpacking strategy (Frida-based deep search and anti-debug bypass)
-  3. 🛡️ Anti-debug bypass (--bypass-antidebug)
-  4. 📊 DEX integrity verification
-  5. 📄 Generate detailed execution report
+Skill Features:
+  1. 🔍 APK Reinforcement Analysis (analyze subcommand)
+  2. ⚡ Intelligent Unpacking Strategy (Frida-based deep search and anti-debug bypass)
+  3. 🛡️ Anti-debug Bypass (--bypass-antidebug)
+  4. 📊 DEX Integrity Verification
+  5. 📄 Generate Detailed Execution Report
 
-Recommended workflow:
+Recommended Workflow:
   1. First analyze APK: android-armor-breaker analyze --apk app.apk
   2. Select unpacking parameters based on analysis results
   3. Execute unpacking: android-armor-breaker --package <package_name> [parameters]
@@ -102,52 +102,51 @@ EOF
 
 show_analyze_help() {
     cat << EOF
-APK protection analysistool
+APK Reinforcement Analysis Tool
 
 Usage:
-  android-armor-breaker analyze --apk <apkfile_path> [Options]
+  android-armor-breaker analyze --apk <apk_file_path> [options]
 
 Options:
-  -a, --apk <file_path>   APK file path (Required)
-  -v, --verbose        Verbose output mode
-  -h, --help           Display this help information
+  -a, --apk <file_path>   APK file path (required)
+  -v, --verbose          Verbose output mode
+  -h, --help             Show this help message
 
 Examples:
   android-armor-breaker analyze --apk ./app.apk
   android-armor-breaker analyze --apk /path/to/app.apk --verbose
 
 Output:
-  - Console displays protection analysis report
-  - Generate JSON format detailed report: <apkfilename>_protection_analysis.json
+  - Console displays reinforcement analysis report
+  - Generates JSON format detailed report: <apk_filename>_protection_analysis.json
 EOF
 }
 
 show_dump_help() {
     cat << EOF
-Android application unpacking tool
+Android Application Unpacking Tool
 
 Usage:
-  android-armor-breaker dump [Options] <Package name or APK file>
+  android-armor-breaker dump [options] <package_name or APK file>
   or
-  android-armor-breaker [Options] <Package name or APK file> (Shorthand form)
+  android-armor-breaker [options] <package_name or APK file> (short form)
 
 Options:
-  -p, --package <package_name>    Android application package name (Mutually exclusive with --apk)
-  -a, --apk <APKfile>     APK file path (Automatically analyze protection and extract package name)
-  -o, --output <directory>     Output directory (Default: ./dex_output)
-  -d, --deep-search      Deep search mode（For strong protections like new Baidu protection）
-  -b, --bypass-antidebug Enable anti-debug bypass（For strong anti-debugging protection）
-  -v, --verbose          Verbose output mode
-  -h, --help             Display this help information
+  -p, --package <package_name>    Android application package name (mutually exclusive with --apk)
+  -a, --apk <APK_file>            APK file path (automatically analyzes reinforcement and extracts package name)
+  -o, --output <directory>        Output directory (default: ./dex_output)
+  -d, --deep-search               Deep search mode (for strong protections like new Baidu reinforcement)
+  -b, --bypass-antidebug          Enable anti-debug bypass (for strong anti-debug protection)
+  -v, --verbose                   Verbose output mode
+  -h, --help                      Show this help message
 
 Description:
-  - If --apk parameter is specified, automatically analyzes APK protection situation：
-      * If not protected: directly extract static DEX files
-      * If protected: execute dynamic unpacking (requires application installed)
-  - If --package parameter is specified, directly execute dynamic unpacking
+  - If --apk parameter is specified, automatically analyzes APK reinforcement:
+      * If no reinforcement: directly extracts static DEX files
+      * If reinforced: executes dynamic unpacking (requires application to be installed)
+  - If --package parameter is specified, directly executes dynamic unpacking
 
-Examples:
-  android-armor-breaker dump --apk ./app.apk --output ./app_dex/
+Examples:  android-armor-breaker dump --apk ./app.apk --output ./app_dex/
   android-armor-breaker --apk /path/to/app.apk -v
   android-armor-breaker dump --package com.example.app
   android-armor-breaker --package com.example.app --output ./dex_output/
@@ -156,7 +155,7 @@ Examples:
 EOF
 }
 
-# Check if APK analysis tool exists
+# Check if APK analyzer exists
 check_apk_analyzer() {
     if [ ! -f "$APK_ANALYZER" ]; then
         log_error "Cannot find APK analysis tool: $APK_ANALYZER"
@@ -170,7 +169,7 @@ analyze_apk() {
     local APK_PATH=""
     local VERBOSE=false
     
-    # Analyze the parameters of analyzeSubcommands
+    # Parse analyze subcommand parameters
     shift  # Remove "analyze"
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -194,9 +193,9 @@ analyze_apk() {
         esac
     done
     
-    # Verify parameters
+    # Validate parameters
     if [ -z "$APK_PATH" ]; then
-        log_error "Please specify the APK file path"
+        log_error "Please specify APK file path"
         show_analyze_help
         exit 1
     fi
@@ -209,7 +208,7 @@ analyze_apk() {
     # Execute analysis
     check_apk_analyzer
     
-    log_info "Starting to analyze APK: $(basename "$APK_PATH")"
+    log_info "Starting APK analysis: $(basename "$APK_PATH")"
     
     if [ "$VERBOSE" = true ]; then
         python3 "$APK_ANALYZER" --apk "$APK_PATH" --verbose
@@ -218,7 +217,7 @@ analyze_apk() {
     fi
 }
 
-# Unpacking function (original function)
+# Unpacking function (original functionality)
 dump_apk() {
     local PACKAGE_NAME=""
     local OUTPUT_DIR="./dex_output"
@@ -226,7 +225,7 @@ dump_apk() {
     local BYPASS_ANTIDEBUG=false
     local VERBOSE=false
     
-    # If it is dumpSubcommands, remove the first parameter
+    # If it's the dump subcommand, remove the first parameter
     if [ "$1" = "dump" ]; then
         shift
     fi
@@ -255,8 +254,8 @@ dump_apk() {
                 shift
                 ;;
             -t|--detect-protection)
-                log_warning "⚠️  --detect-protection Parameter deprecated"
-                log_info "💡 Please use new command to analyze APK: android-armor-breaker analyze --apk <apkfile_path>"
+                log_warning "⚠️  --detect-protection parameter is deprecated"
+                log_info "💡 Please use the new command to analyze APK: android-armor-breaker analyze --apk <apk_file_path>"
                 shift
                 ;;
             -h|--help)
@@ -264,7 +263,7 @@ dump_apk() {
                 exit 0
                 ;;
             *)
-                # If -p/--package is not specified, the first non-option parameter is treated as package name
+                # If -p/--package is not specified, treat the first non-option parameter as package name
                 if [ -z "$PACKAGE_NAME" ]; then
                     PACKAGE_NAME="$1"
                     shift
@@ -276,7 +275,7 @@ dump_apk() {
         esac
     done
     
-    # Verify required parameters
+    # Validate required parameters
     if [ -z "$PACKAGE_NAME" ]; then
         log_error "Please specify application package name"
         echo ""
@@ -284,7 +283,7 @@ dump_apk() {
         exit 1
     fi
     
-    # create Output directory
+    # Create output directory
     mkdir -p "$OUTPUT_DIR"
     
     # Display execution information
@@ -292,16 +291,16 @@ dump_apk() {
     log_info "Output directory: $OUTPUT_DIR"
     
     if [ "$DEEP_SEARCH" = true ]; then
-        log_info "Deep search mode: enable"
+        log_info "Deep search mode: Enabled"
     fi
     if [ "$BYPASS_ANTIDEBUG" = true ]; then
-        log_info "Anti-debug bypass: enable"
+        log_info "Anti-debug bypass: Enabled"
     fi
     if [ "$VERBOSE" = true ]; then
         log_info "Verbose mode: Enabled"
     fi
     
-    # Build Python command parameters
+    # Build Python command arguments
     local PYTHON_ARGS="--package $PACKAGE_NAME --output $OUTPUT_DIR"
     
     if [ "$DEEP_SEARCH" = true ]; then
@@ -315,7 +314,7 @@ dump_apk() {
     fi
     
     # Execute Python script
-    log_info "start Execute unpacking..."
+    log_info "Starting unpacking..."
     python3 "$PYTHON_SCRIPT" $PYTHON_ARGS
     
     # Check execution result
@@ -324,20 +323,20 @@ dump_apk() {
         log_success "Unpacking task completed!"
         log_info "DEX files saved to: $OUTPUT_DIR"
     else
-        log_error "Unpacking task failed (Exit code: $EXIT_CODE)"
+        log_error "Unpacking task failed (exit code: $EXIT_CODE)"
         exit $EXIT_CODE
     fi
 }
 
 # Main function
 main() {
-    # If no parameters, display help
+    # If no arguments, show help
     if [ $# -eq 0 ]; then
         show_help
         exit 0
     fi
     
-    # Check whether the first parameter is a Subcommand
+    # Check if the first parameter is a subcommand
     case "$1" in
         analyze)
             analyze_apk "$@"
@@ -350,15 +349,15 @@ main() {
             exit 0
             ;;
         *)
-            # If there are no Subcommands, the DefaultExecute unpacking function (backward compatibility)
+            # If no subcommand, default to unpacking function (backward compatible)
             # Check if parameter is a package name (does not start with -)
             if [[ "$1" == -* ]]; then
-                # Options，Execute unpacking
+                # It's an option, execute unpacking
                 dump_apk "$@"
             else
-                # Might be a package name, check if it contains . character (package name characteristic)
+                # Might be a package name, check if it contains . character (package name feature)
                 if [[ "$1" == *.* ]]; then
-                    log_info "Detected package_name format, execute unpacking function"
+                    log_info "Detected package name format, executing unpacking function"
                     dump_apk "$@"
                 else
                     # Unknown command
@@ -372,5 +371,5 @@ main() {
     esac
 }
 
-# execute Main function
+# Execute main function
 main "$@"

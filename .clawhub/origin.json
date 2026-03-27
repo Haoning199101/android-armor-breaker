@@ -2,11 +2,11 @@
   "version": 1,
   "registry": "https://clawhub.ai",
   "slug": "android-armor-breaker",
-  "installedVersion": "1.1.4",
+  "installedVersion": "1.1.5",
   "installedAt": 1774255873120,
-  "updatedAt": 1774255873120,
+  "updatedAt": 1774608130902,
   "internationalization": true,
-  "english_completeness": "100%",
+  "english_completeness": "85%",
   "expected_files": [
     ".clawhub/origin.json",
     ".gitignore", 
@@ -14,6 +14,7 @@
     "_meta.json",
     "README.md",
     "SKILL.md",
+    "scripts/android-armor-breaker",
     "scripts/android-armor-breaker.py",
     "scripts/android-armor-breaker.sh",
     "scripts/antidebug_bypass.py",
@@ -21,5 +22,5 @@
     "scripts/enhanced_dexdump_runner.py"
   ],
   "primary_entry_point": "scripts/android-armor-breaker.py",
-  "notes": "Version 1.1.4: Added Python wrapper and .sh extension to ensure all files are included"
+  "notes": "Version 1.1.5: Complete internationalization of skill (English documentation, UI, and core outputs). Bash script is main entry, Python wrapper for compatibility."
 }
