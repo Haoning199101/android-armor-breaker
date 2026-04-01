@@ -1,375 +1,266 @@
-#!/usr/bin/env bash
-# Android Armor Breaker - Skill wrapper script
-# APK reinforcement analysis and intelligent unpacking solution: static identification of mainstream reinforcement vendors, dynamic extraction of DEX files
-# Supports deep search and anti-debug bypass, provides complete DEX integrity verification
-# Provides simple command-line interface
+#!/bin/bash
+# Android Armor Breaker - Main wrapper script
+# Version 2.0.1 - Added VDEX processing capability for NetEase Yidun reinforcement
 
-set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
 
-# Get script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PYTHON_SCRIPT="${SCRIPT_DIR}/enhanced_dexdump_runner.py"
-APK_ANALYZER="${SCRIPT_DIR}/apk_protection_analyzer.py"
-
-# Color output
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+print_header() {
+    echo -e "${BLUE}"
+    echo "================================================"
+    echo "    Android Armor Breaker v2.2.0"
+    echo "    Multi-strategy Android App Unpacking Tool"
+    echo "================================================"
+    echo "    Strategies: Frida • Root Memory • VDEX • Snapshot"
+    echo "================================================"
+    echo -e "${NC}"
 }
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+print_usage() {
+    echo "Usage:"
+    echo "  $0 analyze --apk <apk_file> [--verbose]"
+    echo "      Analyze APK protection type and level"
+    echo ""
+    echo "  $0 --package <package_name> [options]"
+    echo "      Unpack Android application (Intelligent Strategy Selection)"
+    echo ""
+    echo "Options for unpacking:"
+    echo "  --output <dir>         Output directory (default: auto-generated)"
+    echo "  --attempts <num>       Number of unpacking attempts (default: 3)"
+    echo "  --deep-search          Enable deep search mode"
+    echo "  --bypass-antidebug     Enable anti-debug bypass"
+    echo "  --verbose              Verbose output"
+    echo "  --strategy <strategy>  Unpacking strategy: auto, frida, root, snapshot"
+    echo "                         auto: Automatically selects best strategy based on protection type (recommended)"
+    echo "                         frida: Frida dynamic unpacking (default, for no or basic reinforcement)"
+    echo "                         root:  Root memory extraction (bypasses commercial reinforcements like IJIAMI, Bangcle, 360, etc.)"
+    echo "                         snapshot: Memory snapshot attack (for immediately crashing apps)"
+    echo "  --apk <apk_file>       APK file path (for automatic strategy analysis)"
+    echo ""
+    echo "Examples:"
+    echo "  $0 analyze --apk /path/to/app.apk --verbose"
+    echo "  $0 --package com.example.app --deep-search --verbose"
+    echo "  $0 --package com.example.app --bypass-antidebug --output ./dex_files"
+    echo "  $0 --package com.target.app --strategy root --verbose (bypass commercial reinforcement)"
+    echo "  $0 --package com.target.app --strategy auto --apk /path/to/app.apk (intelligent unpacking)"
 }
 
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if Python script exists
-if [ ! -f "$PYTHON_SCRIPT" ]; then
-    log_error "Cannot find Python execution script: $PYTHON_SCRIPT"
-    exit 1
-fi
-
-# Check if Python3 is available
-if ! command -v python3 &> /dev/null; then
-    log_error "Python3 not found, please install Python3 first"
-    exit 1
-fi
-
-# Show help information
-show_help() {
-    cat << EOF
-Android Armor Breaker - APK Reinforcement Analysis and Intelligent Unpacking Solution
-
-Usage:
-  android-armor-breaker [analyze|dump] [options]
-
-Subcommands:
-  analyze              Analyze reinforcement type of APK file
-  dump                 Unpack Android application (default subcommand)
-
-APK Analysis (analyze):
-  android-armor-breaker analyze --apk <apk_file_path> [--verbose]
-
-  -a, --apk <file_path>   APK file path (required)
-  -v, --verbose          Verbose output mode
-
-Application Unpacking (dump):
-  android-armor-breaker dump [options] <package_name>
-  or
-  android-armor-breaker [options] <package_name> (short form)
-
-  -p, --package <package_name>    Android application package name (required)
-  -o, --output <directory>        Output directory (default: ./dex_output)
-  -d, --deep-search               Deep search mode (for strong protections like new Baidu reinforcement)
-  -b, --bypass-antidebug          Enable anti-debug bypass (for strong anti-debug protection)
-  -v, --verbose                   Verbose output mode
-
-Examples:
-  # Analyze APK reinforcement type
-  android-armor-breaker analyze --apk ./app.apk --verbose
-
-  # Unpack application (full form)
-  android-armor-breaker dump --package com.example.app --deep-search
-
-  # Unpack application (short form - backward compatible)
-  android-armor-breaker --package com.example.app --output ./output/
-  android-armor-breaker -p com.example.app -o ./dex_output/ -v
-
-Skill Features:
-  1. 🔍 APK Reinforcement Analysis (analyze subcommand)
-  2. ⚡ Intelligent Unpacking Strategy (Frida-based deep search and anti-debug bypass)
-  3. 🛡️ Anti-debug Bypass (--bypass-antidebug)
-  4. 📊 DEX Integrity Verification
-  5. 📄 Generate Detailed Execution Report
-
-Recommended Workflow:
-  1. First analyze APK: android-armor-breaker analyze --apk app.apk
-  2. Select unpacking parameters based on analysis results
-  3. Execute unpacking: android-armor-breaker --package <package_name> [parameters]
-EOF
-}
-
-show_analyze_help() {
-    cat << EOF
-APK Reinforcement Analysis Tool
-
-Usage:
-  android-armor-breaker analyze --apk <apk_file_path> [options]
-
-Options:
-  -a, --apk <file_path>   APK file path (required)
-  -v, --verbose          Verbose output mode
-  -h, --help             Show this help message
-
-Examples:
-  android-armor-breaker analyze --apk ./app.apk
-  android-armor-breaker analyze --apk /path/to/app.apk --verbose
-
-Output:
-  - Console displays reinforcement analysis report
-  - Generates JSON format detailed report: <apk_filename>_protection_analysis.json
-EOF
-}
-
-show_dump_help() {
-    cat << EOF
-Android Application Unpacking Tool
-
-Usage:
-  android-armor-breaker dump [options] <package_name or APK file>
-  or
-  android-armor-breaker [options] <package_name or APK file> (short form)
-
-Options:
-  -p, --package <package_name>    Android application package name (mutually exclusive with --apk)
-  -a, --apk <APK_file>            APK file path (automatically analyzes reinforcement and extracts package name)
-  -o, --output <directory>        Output directory (default: ./dex_output)
-  -d, --deep-search               Deep search mode (for strong protections like new Baidu reinforcement)
-  -b, --bypass-antidebug          Enable anti-debug bypass (for strong anti-debug protection)
-  -v, --verbose                   Verbose output mode
-  -h, --help                      Show this help message
-
-Description:
-  - If --apk parameter is specified, automatically analyzes APK reinforcement:
-      * If no reinforcement: directly extracts static DEX files
-      * If reinforced: executes dynamic unpacking (requires application to be installed)
-  - If --package parameter is specified, directly executes dynamic unpacking
-
-Examples:  android-armor-breaker dump --apk ./app.apk --output ./app_dex/
-  android-armor-breaker --apk /path/to/app.apk -v
-  android-armor-breaker dump --package com.example.app
-  android-armor-breaker --package com.example.app --output ./dex_output/
-  android-armor-breaker -p com.example.app -o ./dump/ -v
-  android-armor-breaker --package cn.ninebot.ninebot --bypass-antidebug
-EOF
-}
-
-# Check if APK analyzer exists
-check_apk_analyzer() {
-    if [ ! -f "$APK_ANALYZER" ]; then
-        log_error "Cannot find APK analysis tool: $APK_ANALYZER"
-        log_info "Please ensure apk_protection_analyzer.py is in the scripts directory"
-        exit 1
+check_dependencies() {
+    local missing=0
+    
+    echo -e "${YELLOW}[*] Checking dependencies...${NC}"
+    
+    # Required dependencies
+    if ! command -v python3 &> /dev/null; then
+        echo -e "${RED}[!] Python3 not found${NC}"
+        missing=1
+    fi
+    
+    if ! command -v adb &> /dev/null; then
+        echo -e "${RED}[!] ADB not found (required for device connection)${NC}"
+        missing=1
+    fi
+    
+    # Optional dependencies (Frida, only needed for Frida strategy)
+    if ! command -v frida &> /dev/null; then
+        echo -e "${YELLOW}[!] Frida not found (optional, needed for Frida strategy)${NC}"
+        echo -e "${YELLOW}[!] Install with: pip install frida-tools${NC}"
+    fi
+    
+    if ! command -v frida-dexdump &> /dev/null; then
+        echo -e "${YELLOW}[!] frida-dexdump not found (optional, needed for Frida strategy)${NC}"
+        echo -e "${YELLOW}[!] Install with: pip install frida-tools${NC}"
+    fi
+    
+    if [ $missing -eq 0 ]; then
+        echo -e "${GREEN}[+] Required dependencies found${NC}"
+        echo -e "${YELLOW}[!] Note: Frida tools are optional (only needed for Frida strategy)${NC}"
+        return 0
+    else
+        echo -e "${RED}[!] Required dependencies are missing${NC}"
+        return 1
     fi
 }
 
-# APK analysis function
 analyze_apk() {
-    local APK_PATH=""
-    local VERBOSE=false
+    local apk_file=""
+    local verbose=""
     
-    # Parse analyze subcommand parameters
-    shift  # Remove "analyze"
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -a|--apk)
-                APK_PATH="$2"
+            --apk)
+                apk_file="$2"
                 shift 2
                 ;;
-            -v|--verbose)
-                VERBOSE=true
+            --verbose)
+                verbose="--verbose"
                 shift
                 ;;
-            -h|--help)
-                show_analyze_help
-                exit 0
-                ;;
             *)
-                log_error "Unknown parameter: $1"
-                show_analyze_help
+                echo -e "${RED}[!] Unknown argument: $1${NC}"
+                print_usage
                 exit 1
                 ;;
         esac
     done
     
-    # Validate parameters
-    if [ -z "$APK_PATH" ]; then
-        log_error "Please specify APK file path"
-        show_analyze_help
+    if [ -z "$apk_file" ]; then
+        echo -e "${RED}[!] APK file not specified. Use --apk <file>${NC}"
         exit 1
     fi
     
-    if [ ! -f "$APK_PATH" ]; then
-        log_error "APK file does not exist: $APK_PATH"
+    if [ ! -f "$apk_file" ]; then
+        echo -e "${RED}[!] APK file not found: $apk_file${NC}"
         exit 1
     fi
     
-    # Execute analysis
-    check_apk_analyzer
-    
-    log_info "Starting APK analysis: $(basename "$APK_PATH")"
-    
-    if [ "$VERBOSE" = true ]; then
-        python3 "$APK_ANALYZER" --apk "$APK_PATH" --verbose
-    else
-        python3 "$APK_ANALYZER" --apk "$APK_PATH"
-    fi
+    echo -e "${YELLOW}[*] Analyzing APK: $apk_file${NC}"
+    python3 apk_protection_analyzer.py --apk "$apk_file" $verbose
 }
 
-# Unpacking function (original functionality)
-dump_apk() {
-    local PACKAGE_NAME=""
-    local OUTPUT_DIR="./dex_output"
-    local DEEP_SEARCH=false
-    local BYPASS_ANTIDEBUG=false
-    local VERBOSE=false
+unpack_app() {
+    local package=""
+    local output=""
+    local attempts=""
+    local deep_search=""
+    local bypass_antidebug=""
+    local verbose=""
+    local strategy=""
+    local apk_file=""
     
-    # If it's the dump subcommand, remove the first parameter
-    if [ "$1" = "dump" ]; then
-        shift
-    fi
-    
-    # Parse parameters (compatible with original syntax)
     while [[ $# -gt 0 ]]; do
         case $1 in
-            -p|--package)
-                PACKAGE_NAME="$2"
+            --package)
+                package="$2"
                 shift 2
                 ;;
-            -o|--output)
-                OUTPUT_DIR="$2"
+            --output)
+                output="$2"
                 shift 2
                 ;;
-            -d|--deep-search)
-                DEEP_SEARCH=true
+            --attempts)
+                attempts="$2"
+                shift 2
+                ;;
+            --deep-search)
+                deep_search="true"
                 shift
                 ;;
-            -b|--bypass-antidebug)
-                BYPASS_ANTIDEBUG=true
+            --bypass-antidebug)
+                bypass_antidebug="true"
                 shift
                 ;;
-            -v|--verbose)
-                VERBOSE=true
+            --verbose)
+                verbose="true"
                 shift
                 ;;
-            -t|--detect-protection)
-                log_warning "⚠️  --detect-protection parameter is deprecated"
-                log_info "💡 Please use the new command to analyze APK: android-armor-breaker analyze --apk <apk_file_path>"
-                shift
+            --strategy)
+                strategy="$2"
+                shift 2
                 ;;
-            -h|--help)
-                show_dump_help
-                exit 0
+            --apk)
+                apk_file="$2"
+                shift 2
                 ;;
             *)
-                # If -p/--package is not specified, treat the first non-option parameter as package name
-                if [ -z "$PACKAGE_NAME" ]; then
-                    PACKAGE_NAME="$1"
-                    shift
-                else
-                    log_warning "Unknown parameter: $1"
-                    shift
-                fi
+                echo -e "${RED}[!] Unknown argument: $1${NC}"
+                print_usage
+                exit 1
                 ;;
         esac
     done
     
-    # Validate required parameters
-    if [ -z "$PACKAGE_NAME" ]; then
-        log_error "Please specify application package name"
-        echo ""
-        show_dump_help
+    if [ -z "$package" ]; then
+        echo -e "${RED}[!] Package name not specified. Use --package <name>${NC}"
         exit 1
     fi
     
-    # Create output directory
-    mkdir -p "$OUTPUT_DIR"
-    
-    # Display execution information
-    log_info "Target application: $PACKAGE_NAME"
-    log_info "Output directory: $OUTPUT_DIR"
-    
-    if [ "$DEEP_SEARCH" = true ]; then
-        log_info "Deep search mode: Enabled"
-    fi
-    if [ "$BYPASS_ANTIDEBUG" = true ]; then
-        log_info "Anti-debug bypass: Enabled"
-    fi
-    if [ "$VERBOSE" = true ]; then
-        log_info "Verbose mode: Enabled"
+    # 警告：attempts参数当前被忽略
+    if [ -n "$attempts" ]; then
+        echo -e "${YELLOW}[!] Warning: --attempts parameter is currently ignored${NC}"
+        echo -e "${YELLOW}[!] It will be supported in a future version${NC}"
     fi
     
-    # Build Python command arguments
-    local PYTHON_ARGS="--package $PACKAGE_NAME --output $OUTPUT_DIR"
+    # 构建命令
+    cmd="python3 unpack_orchestrator.py --package \"$package\""
     
-    if [ "$DEEP_SEARCH" = true ]; then
-        PYTHON_ARGS="$PYTHON_ARGS --deep-search"
-    fi
-    if [ "$BYPASS_ANTIDEBUG" = true ]; then
-        PYTHON_ARGS="$PYTHON_ARGS --bypass-antidebug"
-    fi
-    if [ "$VERBOSE" = true ]; then
-        PYTHON_ARGS="$PYTHON_ARGS --verbose"
+    if [ -n "$output" ]; then
+        cmd="$cmd --output \"$output\""
     fi
     
-    # Execute Python script
-    log_info "Starting unpacking..."
-    python3 "$PYTHON_SCRIPT" $PYTHON_ARGS
-    
-    # Check execution result
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 0 ]; then
-        log_success "Unpacking task completed!"
-        log_info "DEX files saved to: $OUTPUT_DIR"
+    if [ -n "$strategy" ]; then
+        cmd="$cmd --strategy \"$strategy\""
     else
-        log_error "Unpacking task failed (exit code: $EXIT_CODE)"
-        exit $EXIT_CODE
-    fi
-}
-
-# Main function
-main() {
-    # If no arguments, show help
-    if [ $# -eq 0 ]; then
-        show_help
-        exit 0
+        # Default strategy: auto if apk file provided, otherwise frida
+        if [ -n "$apk_file" ]; then
+            cmd="$cmd --strategy auto"
+        else
+            cmd="$cmd --strategy frida"
+            echo -e "${YELLOW}[!] No strategy specified, using default Frida strategy${NC}"
+            echo -e "${YELLOW}[!] Recommendation: Provide --apk parameter to enable intelligent strategy selection${NC}"
+        fi
     fi
     
-    # Check if the first parameter is a subcommand
-    case "$1" in
-        analyze)
-            analyze_apk "$@"
-            ;;
-        dump)
-            dump_apk "$@"
-            ;;
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-        *)
-            # If no subcommand, default to unpacking function (backward compatible)
-            # Check if parameter is a package name (does not start with -)
-            if [[ "$1" == -* ]]; then
-                # It's an option, execute unpacking
-                dump_apk "$@"
-            else
-                # Might be a package name, check if it contains . character (package name feature)
-                if [[ "$1" == *.* ]]; then
-                    log_info "Detected package name format, executing unpacking function"
-                    dump_apk "$@"
-                else
-                    # Unknown command
-                    log_error "Unknown command: $1"
-                    echo ""
-                    show_help
-                    exit 1
-                fi
-            fi
-            ;;
-    esac
+    if [ -n "$apk_file" ]; then
+        cmd="$cmd --apk \"$apk_file\""
+    fi
+    
+    if [ "$deep_search" = "true" ]; then
+        cmd="$cmd --deep-search"
+    fi
+    
+    if [ "$bypass_antidebug" = "true" ]; then
+        cmd="$cmd --bypass-antidebug"
+    fi
+    
+    if [ "$verbose" = "true" ]; then
+        cmd="$cmd --verbose"
+    fi
+    
+    echo -e "${YELLOW}[*] Unpacking application: $package${NC}"
+    if [ -n "$strategy" ]; then
+        echo -e "${YELLOW}[*] Strategy: $strategy${NC}"
+    fi
+    if [ -n "$apk_file" ]; then
+        echo -e "${YELLOW}[*] APK for analysis: $(basename "$apk_file")${NC}"
+    fi
+    
+    # 执行命令
+    eval $cmd
 }
 
-# Execute main function
-main "$@"
+# Main execution
+print_header
+
+if [ $# -eq 0 ]; then
+    print_usage
+    exit 0
+fi
+
+# Check dependencies
+check_dependencies || exit 1
+
+# Parse command
+case "$1" in
+    analyze)
+        shift
+        analyze_apk "$@"
+        ;;
+    --help|-h)
+        print_usage
+        ;;
+    --version)
+        echo "Android Armor Breaker v2.2.0"
+        ;;
+    *)
+        # Assume unpack command
+        unpack_app "$@"
+        ;;
+esac

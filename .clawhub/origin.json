@@ -2,24 +2,6 @@
   "version": 1,
   "registry": "https://clawhub.ai",
   "slug": "android-armor-breaker",
-  "installedVersion": "1.1.8",
-  "installedAt": 1774255873120,
-  "updatedAt": 1774609431666,
-  "internationalization": true,
-  "english_completeness": "98%",
-  "expected_files": [
-    ".clawhub/origin.json",
-    ".gitignore", 
-    "LICENSE",
-    "_meta.json",
-    "README.md",
-    "SKILL.md",
-    "scripts/android-armor-breaker",
-    "scripts/android-armor-breaker.py",
-    "scripts/antidebug_bypass.py",
-    "scripts/apk_protection_analyzer.py",
-    "scripts/enhanced_dexdump_runner.py"
-  ],
-  "primary_entry_point": "scripts/android-armor-breaker.py",
-  "notes": "Version 1.1.8: Final internationalization release - all mixed Chinese-English translations fixed. Complete consistent English output. Ready for global use on clawhub."
+  "installedVersion": "2.2.0",
+  "installedAt": 1774704242778
 }
